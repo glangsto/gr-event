@@ -1,0 +1,80 @@
+/* -*- c++ -*- */
+/* 
+ * Copyright 2019 Glen Langston; Quiet Skies LLC
+ * 
+ * This is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3, or (at your option)
+ * any later version.
+ * 
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this software; see the file COPYING.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street,
+ * Boston, MA 02110-1301, USA.
+ */
+
+#ifndef INCLUDED_RADIO_ASTRO_EVENT_IMPL_H
+#define INCLUDED_RADIO_ASTRO_EVENT_IMPL_H
+
+#include <radio_astro/event.h>
+
+namespace gr {
+  namespace radio_astro {
+
+    class event_detect_impl : public event
+    // event detection: fill a circular buffer with complex samples and
+    // search for peaks nsigma above the RMS of the data stream
+    // input:
+    // complex vector of I/Q samples
+    // parameters
+    // 1. Vector length
+    // 2. Number of sigma to declare an event
+    // 3. Bandwidth used to unwind the time of the event in circular buffer
+    // 4. Estimated time it takes for sample to go from input of horn to block
+    // 5. Mode: 1: Monitor, just pass input data,
+    //          2: Detect events and repeatedly output the last event
+    // output:
+    // 1: Vector of complex I/Q samples
+    // Event is tagged with three floating point values:
+    // 1. Modified Julian Date of Event
+    // 2. Peak intensity
+    // 3. RMS of data stream near event
+    {
+     private:
+      // Nothing to declare in this block.
+      int d_vlen;
+      float d_n_sigma;
+      float d_bw_hz;
+      float d_dt;
+      int d_mode;
+      float peak = 0;
+      float rms = 0;
+      float mjd = 0;
+      gr_complex *v1;
+      gr_complex *v2;
+
+     public:
+      event_detect_impl(int vlen, float n_sigma, float bw_hz, float dt, int mode);
+      ~event_detect_impl();
+
+      // Where all the action really happens
+      void forecast (int noutput_items, gr_vector_int &ninput_items_required);
+
+      int detect(int vlen, float n_simga, const gr_complex *input, gr_complex *output);
+
+      int general_work(int noutput_items,
+           gr_vector_int &ninput_items,
+           gr_vector_const_void_star &input_items,
+           gr_vector_void_star &output_items);
+    };
+
+  } // namespace radio_astro
+} // namespace gr
+
+#endif /* INCLUDED_RADIO_ASTRO_EVENT_IMPL_H */
+
